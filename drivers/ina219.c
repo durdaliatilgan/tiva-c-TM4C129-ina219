@@ -217,8 +217,8 @@ uint_fast8_t (INA219Calibrate)(tINA219 *psInst, tI2CMInstance *psI2CInst, uint_f
     //
     // Write the reset bit and issue a callback when finished.
     //
-    if(I2CMWrite(psInst->psI2CInst, ui8I2CAddr, psInst->pui8DataCalib, 3,
-                 INA219Callback, psInst) == 0  )
+    if(!I2CMWrite(psInst->psI2CInst, ui8I2CAddr, psInst->pui8DataCalib, 3,
+                 INA219Callback, psInst)   )
     {
         //
         // I2CMWrite failed so reset INA219 state and return zero to indicate
@@ -418,7 +418,14 @@ uint_fast8_t (INA219ReadCurrentRaw)(tINA219 *psInst, tSensorCallback *pfnCallbac
     //
     return(1);
 }
-
+/// @brief
+///
+/// @param psInst ::
+/// @param pfnCallback  ::
+/// @param pvCallbackData  ::
+/// @param readWhichValue  ::
+/// @return succes
+///
 uint_fast8_t (INA219ReadPowerRaw)(tINA219 *psInst, tSensorCallback *pfnCallback,
                void *pvCallbackData, uint8_t readWhichValue)
 {

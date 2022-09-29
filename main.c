@@ -85,7 +85,7 @@ int main(void)
     // initialize i2c0
     initI2C0();
 
-    //Enable interrupt
+    //Enþable interrupt
     IntMasterEnable();
 
     // initialize i2c
@@ -95,6 +95,9 @@ int main(void)
     //ina219 calibration func.
     INA219Calibrate(&g_sINA219Inst, &g_sI2CInst, INA219_ADDRESS,
                     INA219AppCallback,&g_sINA219Inst, INA219_CALIB_32V_2A);
+
+    // Wait for initialization callback
+    while(g_vui8DataFlag == 0);
 
     //ina219 configuration func.
     INA219Configuration(&g_sINA219Inst, &g_sI2CInst, INA219_ADDRESS,

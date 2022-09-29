@@ -10,4 +10,5 @@
 	<createSlaveProjects value=""/>
 	<origin value="C:/ti/tivaware_c_series_2_1_4_178/examples/boards/dk-tm4c129x-boostxl-senshub/pressure_bmp180/ccs"/>
 	<isTargetManual value="true"/>
+	<sourceLookupPath value=""/>
 </projectOptions>
