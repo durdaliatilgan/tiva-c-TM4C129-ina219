@@ -47,6 +47,102 @@ __error__(char *pcFilename, uint32_t ui32Line)
 
 
 
+void initI2C0(void);
+
+//*****************************************************************************
+// INA219 Sensor callback function.  Called at the end of INA219 sensor driver
+// transactions.
+//*****************************************************************************
+void INA219AppCallback(void* pvCallbackData, uint_fast8_t ui8Status)
+{
+    if(ui8Status == I2CM_STATUS_SUCCESS)
+    {
+        g_vui8DataFlag = 1;
+    }
+}
+
+//*****************************************************************************
+// Called by the NVIC as a result of I2C0 Interrupt. I2C0 is the I2C connection
+// to the INA219.
+//*****************************************************************************
+void INA219I2CIntHandler(void)
+{
+    //i2cm lib i2c interrunt handler definition.
+    I2CMIntHandler(&g_sI2CInst);
+}
+
+
+
+
+int main(void)
+{
+    // variables declaration for current power and voltage
+    float fCurrent,fBusVoltage,fShontVoltage,fPower;
+
+    // clock frequency setting for 120MHz clock freq.
+    uint32_t ui32SysClock  = SysCtlClockFreqSet((SYSCTL_XTAL_25MHZ | SYSCTL_OSC_MAIN |
+                                      SYSCTL_USE_PLL | SYSCTL_CFG_VCO_480), 120000000);
+    // initialize i2c0
+    initI2C0();
+
+    //Enable interrupt
+    IntMasterEnable();
+
+    // initialize i2c
+    I2CMInit(&g_sI2CInst, I2C0_BASE, INT_I2C0, 0, 0,
+             ui32SysClock);
+
+    //ina219 calibration func.
+    INA219Calibrate(&g_sINA219Inst, &g_sI2CInst, INA219_ADDRESS,
+                    INA219AppCallback,&g_sINA219Inst, INA219_CALIB_32V_2A);
+
+    //ina219 configuration func.
+    INA219Configuration(&g_sINA219Inst, &g_sI2CInst, INA219_ADDRESS,
+                        INA219AppCallback, &g_sINA219Inst, INA219_CALIB_32V_2A);
+
+
+    // Wait for initialization callback
+    while(g_vui8DataFlag == 0);
+
+
+    // Reset the data ready flag
+    g_vui8DataFlag = 0;
+
+
+    while(1)
+    {
+        //
+        // Read the data from the INA219 over I2C.
+        SysCtlDelay(3000);
+        // read 16 bit current calue
+        INA219ReadCurrentRaw(&g_sINA219Inst, INA219AppCallback,
+                             &g_sINA219Inst,INA219_REG_CURRENT);
+
+        // calculation float current value
+        INA219CalculateCurrent(&g_sINA219Inst, &fCurrent);
+
+        //wait for i2c sending and receiving ended succesfully.
+        while(g_vui8DataFlag == 0);
+
+        SysCtlDelay(3000);
+
+        // read 16 bit power calue
+        INA219ReadPowerRaw(&g_sINA219Inst, INA219AppCallback,
+                           &g_sINA219Inst,INA219_REG_POWER);
+
+        // calculation float power value
+        INA219CalculatePower(&g_sINA219Inst, &fPower);
+
+        //wait for i2c sending and receiving ended succesfully.
+        while(g_vui8DataFlag == 0);
+
+
+        // Reset the data ready flag.
+        g_vui8DataFlag = 0;
+
+        //SysCtlDelay(ui32SysClock/100);
+    }
+}
 
 void initI2C0(void)
 {
@@ -67,102 +163,4 @@ void initI2C0(void)
    GPIOPinTypeI2C(GPIO_PORTB_BASE, GPIO_PIN_3);
 
 
-   //I2CMasterInitExpClk(I2C0_BASE, 25'000'000, true);
-
-}
-
-//*****************************************************************************
-// INA219 Sensor callback function.  Called at the end of INA219 sensor driver
-// transactions.
-//*****************************************************************************
-void INA219AppCallback(void* pvCallbackData, uint_fast8_t ui8Status)
-{
-    if(ui8Status == I2CM_STATUS_SUCCESS)
-    {
-        g_vui8DataFlag = 1;
-    }
-}
-
-//*****************************************************************************
-//
-// Called by the NVIC as a result of I2C3 Interrupt. I2C0 is the I2C connection
-// to the INA219.
-//
-//*****************************************************************************
-void
-INA219I2CIntHandler(void)
-{
-
-    //
-    I2CMIntHandler(&g_sI2CInst);
-}
-
-float fCurrent,fBusVoltage,fShontVoltage,fPower;
-uint32_t ui32SysClock;
-
-int
-main(void)
-{
-
-
-
-
-    ui32SysClock = SysCtlClockFreqSet((SYSCTL_XTAL_25MHZ |
-                                           SYSCTL_OSC_MAIN |
-                                           SYSCTL_USE_PLL |
-                                           SYSCTL_CFG_VCO_480), 120000000);
-
-
-
-    initI2C0();
-
-    //Enable interrupt
-    IntMasterEnable();
-
-    // initialize i2c
-    I2CMInit(&g_sI2CInst, I2C0_BASE, INT_I2C0, 0, 0,
-             ui32SysClock);
-
-    //ina219 calibration func.
-    INA219Calibrate(&g_sINA219Inst, &g_sI2CInst, INA219_ADDRESS, INA219AppCallback, &g_sINA219Inst, INA219_CALIB_32V_2A);
-
-    //ina219 configuration func.
-    INA219Configuration(&g_sINA219Inst, &g_sI2CInst, INA219_ADDRESS,INA219AppCallback, &g_sINA219Inst, INA219_CALIB_32V_2A);
-
-
-    // Wait for initialization callback
-    while(g_vui8DataFlag == 0);
-
-
-    // Reset the data ready flag
-    g_vui8DataFlag = 0;
-
-
-    while(1)
-    {
-        //
-        // Read the data from the INA219 over I2C.
-        SysCtlDelay(3000);
-        INA219ReadCurrentRaw(&g_sINA219Inst, INA219AppCallback, &g_sINA219Inst,INA219_REG_CURRENT);
-        INA219CalculateCurrent(&g_sINA219Inst, &fCurrent);
-
-
-        while(g_vui8DataFlag == 0);
-
-
-        SysCtlDelay(3000);
-
-        INA219ReadPowerRaw(&g_sINA219Inst, INA219AppCallback, &g_sINA219Inst,INA219_REG_POWER);
-
-        INA219CalculatePower(&g_sINA219Inst, &fPower);
-
-        while(g_vui8DataFlag == 0);
-
-
-        // Reset the data ready flag.
-        g_vui8DataFlag = 0;
-
-
-        //SysCtlDelay(ui32SysClock/100);
-    }
 }
