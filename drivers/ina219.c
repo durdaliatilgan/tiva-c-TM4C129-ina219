@@ -83,7 +83,7 @@ static void (INA219Callback)(void *pvCallbackData, uint_fast8_t ui8Status)
             // The temperature reading is ready, so read it now.
             //
             I2CMRead(psInst->psI2CInst, psInst->ui8Addr,
-                     psInst->uCommand.pui8Buffer, 1, psInst->pui8Data, 2,
+                     psInst->uCommand.pui8BufferCur, 1, psInst->pui8Data, 2,
                      INA219Callback, psInst);
 
             //
@@ -103,7 +103,7 @@ static void (INA219Callback)(void *pvCallbackData, uint_fast8_t ui8Status)
             // The temperature reading is ready, so read it now.
             //
             I2CMRead(psInst->psI2CInst, psInst->ui8Addr,
-                     psInst->uCommand.pui8Buffer, 1, psInst->pui8Data, 2,
+                     psInst->uCommand.pui8BufferPow, 1, psInst->pui8DataPower, 2,
                      INA219Callback, psInst);
 
             //
@@ -355,7 +355,6 @@ uint_fast8_t (INA219Read)(tINA219 *psInst, uint_fast8_t ui8Reg, uint16_t *pui16D
         //
         // This is one of the temperature registers, which are 16-bit
         // big-endian registers.
-        //
         if(I2CMRead16BE(&(psInst->uCommand.sReadState), psInst->psI2CInst,
                         psInst->ui8Addr, ui8Reg, pui16Data, ui16Count,
                         INA219Callback, psInst) == 0)
@@ -400,7 +399,7 @@ uint_fast8_t (INA219ReadCurrentRaw)(tINA219 *psInst, tSensorCallback *pfnCallbac
     //
     psInst->ui8State = INA219_STATE_READ_CUR;
 
-    psInst->uCommand.pui8Buffer[0]= INA219_REG_CURRENT;
+    psInst->uCommand.pui8BufferCur[0]= INA219_REG_CURRENT;
     //
     // Read the temperature data from the INA219.
     //
@@ -444,7 +443,7 @@ uint_fast8_t (INA219ReadPowerRaw)(tINA219 *psInst, tSensorCallback *pfnCallback,
     //
     psInst->ui8State = INA219_STATE_READ_POWER;
 
-    psInst->uCommand.pui8Buffer[0]=INA219_REG_POWER;
+    psInst->uCommand.pui8BufferPow[0]=INA219_REG_POWER;
 
     //
     // Read the temperature data from the INA219.
@@ -561,14 +560,17 @@ void (INA219CalculateCurrent)(tINA219 *psInst, float *pui16Current)
     //
     // Return the raw pressure value.
     //
-    *pui16Current = ((psInst->pui8Data[0] << 8) | (psInst->pui8Data[1] )) / psInst->sCalibration.ina219_currentDivider_mA;
+    float asd= ((psInst->pui8Data[0] << 8) | (psInst->pui8Data[1] )) / (float) psInst->sCalibration.ina219_currentDivider_mA;
+    *pui16Current = ((psInst->pui8Data[0] << 8) | (psInst->pui8Data[1] )) / (float) psInst->sCalibration.ina219_currentDivider_mA;
+
 }
 void (INA219CalculatePower)(tINA219 *psInst, float *pui16Power)
 {
     //
     // Return the power value.
     //
-    *pui16Power = ((psInst->pui8Data[0] << 8) | (psInst->pui8Data[1] )) * psInst->sCalibration.ina219_powerMultiplier_mW;
+    float asd = ((psInst->pui8DataPower[0] << 8) | (psInst->pui8DataPower[1] )) * psInst->sCalibration.ina219_powerMultiplier_mW;
+    *pui16Power = ((psInst->pui8DataPower[0] << 8) | (psInst->pui8DataPower[1] )) * psInst->sCalibration.ina219_powerMultiplier_mW;
 }
 void (INA219CalculateShontVoltage)(tINA219 *psInst, float *pui16ShontVoltage)
 {
