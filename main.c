@@ -149,6 +149,7 @@ main(void)
 
         while(g_vui8DataFlag == 0);
 
+
         SysCtlDelay(3000);
 
         INA219ReadPowerRaw(&g_sINA219Inst, INA219AppCallback, &g_sINA219Inst,INA219_REG_POWER);
