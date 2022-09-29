@@ -65,6 +65,7 @@ void INA219AppCallback(void* pvCallbackData, uint_fast8_t ui8Status)
 // Called by the NVIC as a result of I2C0 Interrupt. I2C0 is the I2C connection
 // to the INA219.
 //*****************************************************************************
+
 void INA219I2CIntHandler(void)
 {
     //i2cm lib i2c interrunt handler definition.
