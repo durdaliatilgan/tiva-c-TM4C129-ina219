@@ -13,7 +13,6 @@
 #include "driverlib/rom.h"
 #include "driverlib/rom_map.h"
 #include "driverlib/sysctl.h"
-
 #include "sensorlib/i2cm_drv.h"
 
 #include "drivers/ina219.h"
